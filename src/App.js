@@ -4,9 +4,19 @@ import { listNotes } from './queries'
 import { withAuthenticator, Button, Text, Flex, Heading } from "@aws-amplify/ui-react";
 import { useCallback, useEffect, useState } from 'react';
 import { API } from 'aws-amplify';
+import NoteModal from './components/NoteModal';
 
 function App( { signOut }) {
   const [notes, setNotes] = useState([])
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => {
+    setIsModalOpen(true)
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  }
 
   const fetchNotes = useCallback(async () => {
     const result = await API.graphql({
@@ -18,10 +28,10 @@ function App( { signOut }) {
     setNotes(result.data.listNotes.items)
   }, [setNotes])
 
-  const handleCreateNote = useCallback(async () => {
+  const handleCreateNote = useCallback(async (modalText) => {
     await API.graphql({
       query: createNote,
-      variables: { input: { text: window.prompt('New note')}},
+      variables: { input: { text: modalText}},
       authMode: 'AMAZON_COGNITO_USER_POOLS'
     })
     fetchNotes()
@@ -50,7 +60,8 @@ function App( { signOut }) {
        <Text>{note.text}</Text>
        <Button onClick={() => handleDeleteNote(note.id)}>Remove</Button>
       </Flex>)}
-      <Button onClick={handleCreateNote}>Add note</Button>
+      <button onClick={openModal}> Create Note:</button>
+      <NoteModal isOpen={isModalOpen} onRequestClose={closeModal} onSubmit={handleCreateNote} />
     </Flex>
   );
 }
